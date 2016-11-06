@@ -7,6 +7,7 @@ using System.Text;
 using System.Windows.Forms;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 
 
 namespace Concatapp
@@ -78,30 +79,40 @@ namespace Concatapp
                         // extarcting
                         foreach (FileInfo file in Files)
                         {
-                            txtResult.Text += "Extracting + " + file.Name + "\r\n";
+                            txtResult.Text += "Extracting -" + file.Name + "\r\n";
                             ZipFile.ExtractToDirectory(file.FullName, tempFolderPath);
                         }
                         // getting temp directory file info
                         DirectoryInfo tempD = new DirectoryInfo(tempFolderPath);
                         FileInfo[] tempFiles = tempD.GetFiles();
-                        // concatenating
-                        using (FileStream outputStream = File.Create(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension))
+                        // validating after extraction
+                        if (validate(tempFiles))
                         {
+                            // concatenating
+                            using (FileStream outputStream = File.Create(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension))
+                            {
+                                foreach (FileInfo file in tempFiles)
+                                {
+                                    using (FileStream inputStream = file.Open(FileMode.Open))
+                                    {
+                                        // Buffer size can be passed as the second argument.
+                                        inputStream.CopyTo(outputStream);
+                                    }
+                                    txtResult.Text += "The file " + file.Name + " has been processed.\r\n";
+                                }
+                            }
+                            string tempfileNames = ""; 
                             foreach (FileInfo file in tempFiles)
                             {
-                                using (FileStream inputStream = file.Open(FileMode.Open))
-                                {
-                                    // Buffer size can be passed as the second argument.
-                                    inputStream.CopyTo(outputStream);
-                                }
-                                txtResult.Text += "The file " + file.FullName + " has been processed.\r\n";
+                                tempfileNames = tempfileNames + file.Name + " ";
                             }
+                            txtResult.Text += "Extracted: " + tempfileNames + "\r\n";
+                            // compressing 
+                            Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension));
+                            // moving compressed file to parent directory
+                            FileInfo compressed = new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension + ".gz");
+                            compressed.CopyTo(compressed.Directory.Parent.FullName + @"\" + compressed.Name);
                         }
-                        // compressing 
-                        Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension));
-                        // moving compressed file to parent directory
-                        FileInfo compressed = new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension + ".gz");
-                        compressed.CopyTo(compressed.Directory.Parent.FullName + @"\" + compressed.Name);
                     }
                     if (Files[0].Extension.Equals(".gz"))
                     {
@@ -128,6 +139,7 @@ namespace Concatapp
                     // deleting temp directory
                     DirectoryInfo di = new DirectoryInfo(tempFolderPath);
                     di.Delete(true);
+                    txtResult.Text += "\r\n-------finished-------\r\n";
                 }
             }
         }
@@ -149,8 +161,12 @@ namespace Concatapp
             // continue only if we have valid extension, now checking if all extension are the same
             if (valid)
             {
-                // TODO:
-                valid = true;
+                string [] otherfiles = Directory.GetFiles(Files[0].Directory.FullName).Where(x => Path.GetExtension(x) != Files[0].Extension).ToArray();
+                if (otherfiles.Length > 0)
+                {
+                    txtResult.Text += "Error - the files/files inside zip have different extensions";
+                    valid = false;
+                }
             }
             return valid;
         }
@@ -168,12 +184,9 @@ namespace Concatapp
                     != FileAttributes.Hidden & fi.Extension != ".gz")
                 {
                     // Create the compressed file.
-                    using (FileStream outFile =
-                                File.Create(fi.FullName + ".gz"))
+                    using (FileStream outFile = File.Create(fi.FullName + ".gz"))
                     {
-                        using (GZipStream Compress =
-                            new GZipStream(outFile,
-                            CompressionMode.Compress))
+                        using (GZipStream Compress = new GZipStream(outFile, CompressionMode.Compress))
                         {
                             // Copy the source file into 
                             // the compression stream.
