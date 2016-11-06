@@ -1,13 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Text;
+using System.Diagnostics;
 using System.Windows.Forms;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
+using System.Threading;
+using System.ComponentModel;
 
 
 namespace Concatapp
@@ -15,6 +13,10 @@ namespace Concatapp
     public partial class Form1 : Form
     {
         private string[] acceptedExt = new string[4] { ".txt", ".fastq", ".zip", ".gz"};
+
+        // background worker for concatenate
+        private Thread thread;
+
         public Form1()
         {
             InitializeComponent();
@@ -51,36 +53,46 @@ namespace Concatapp
                 if (validate(Files))
                 {
                     // creating temp folder
-                    string tempFolderPath = System.IO.Path.Combine(txtFolder.Text, "concatTemp");
+                    string tempFolderPath = Path.Combine(txtFolder.Text, "concatTemp");
                     Directory.CreateDirectory(tempFolderPath);
-                    // concatenating
+                    // .txt and .fastq 
                     if (Files[0].Extension.Equals(".txt") || Files[0].Extension.Equals(".fastq"))
                     {
+                        // concatenating
                         using (FileStream outputStream = File.Create(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension))
                         {
                             foreach (FileInfo file in Files)
                             {
                                 using (FileStream inputStream = file.Open(FileMode.Open))
                                 {
-                                    // Buffer size can be passed as the second argument.
-                                    inputStream.CopyTo(outputStream);
+                                    Thread concatthread = new Thread(() => inputStream.CopyTo(outputStream));
+                                    concatthread.Start();
+                                    // waiting for finish
+                                    concatthread.Join();
                                 }
                                 txtResult.Text += "The file " + file.Name + " has been processed.\r\n";
                             }
                         }
                         // compressing 
-                        Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension));
+                        Thread thread = new Thread(() => Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension)));
+                        thread.Start();
+                        // waiting for finish
+                        thread.Join();
                         // moving compressed file to parent directory
                         FileInfo compressed = new FileInfo(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension + ".gz");
                         compressed.CopyTo(compressed.Directory.Parent.FullName + "\\" + compressed.Name);
                     }
-                    if (Files[0].Extension.Equals(".zip"))
+                    // .zip files
+                    else if (Files[0].Extension.Equals(".zip"))
                     {
                         // extarcting
                         foreach (FileInfo file in Files)
                         {
                             txtResult.Text += "Extracting -" + file.Name + "\r\n";
-                            ZipFile.ExtractToDirectory(file.FullName, tempFolderPath);
+                            Thread unzipthread = new Thread(() => ZipFile.ExtractToDirectory(file.FullName, tempFolderPath));
+                            unzipthread.Start();
+                            // waiting for finish
+                            unzipthread.Join();
                         }
                         // getting temp directory file info
                         DirectoryInfo tempD = new DirectoryInfo(tempFolderPath);
@@ -88,6 +100,13 @@ namespace Concatapp
                         // validating after extraction
                         if (validate(tempFiles))
                         {
+                            // printing decompressed files
+                            string tempfileNames = "";
+                            foreach (FileInfo file in tempFiles)
+                            {
+                                tempfileNames = tempfileNames + file.Name + " ";
+                            }
+                            txtResult.Text += "Extracted: " + tempfileNames + "\r\n";
                             // concatenating
                             using (FileStream outputStream = File.Create(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension))
                             {
@@ -95,25 +114,26 @@ namespace Concatapp
                                 {
                                     using (FileStream inputStream = file.Open(FileMode.Open))
                                     {
-                                        // Buffer size can be passed as the second argument.
-                                        inputStream.CopyTo(outputStream);
+                                        Thread concatthread = new Thread(() => inputStream.CopyTo(outputStream));
+                                        concatthread.Start();
+                                        // waiting for finish
+                                        concatthread.Join();
                                     }
                                     txtResult.Text += "The file " + file.Name + " has been processed.\r\n";
                                 }
                             }
-                            string tempfileNames = ""; 
-                            foreach (FileInfo file in tempFiles)
-                            {
-                                tempfileNames = tempfileNames + file.Name + " ";
-                            }
-                            txtResult.Text += "Extracted: " + tempfileNames + "\r\n";
+                            //Concat(txtResult, tempFolderPath, tempFiles, txtOutput.Text);
                             // compressing 
-                            Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension));
+                            Thread thread = new Thread(() => Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension)));
+                            thread.Start();
+                            // waiting for finish
+                            thread.Join();
                             // moving compressed file to parent directory
                             FileInfo compressed = new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension + ".gz");
                             compressed.CopyTo(compressed.Directory.Parent.FullName + @"\" + compressed.Name);
                         }
                     }
+                    // .gz files 
                     if (Files[0].Extension.Equals(".gz"))
                     {
                         string filesFullNames = "";
@@ -126,14 +146,15 @@ namespace Concatapp
                                 filesFullNames = filesFullNames + "\"" +  file.FullName + "\"" + " ";
                         }
                         // concatenating
-                        System.Diagnostics.Process process = new System.Diagnostics.Process();
-                        System.Diagnostics.ProcessStartInfo startInfo = new System.Diagnostics.ProcessStartInfo();
-                        startInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+                        txtResult.Text += "Concatenating\r\n";
+                        ProcessStartInfo startInfo = new ProcessStartInfo();
+                        startInfo.WindowStyle = ProcessWindowStyle.Hidden;
                         startInfo.FileName = "cmd.exe";
                         startInfo.Arguments = "/C copy /b  " + filesFullNames + "\"" + txtFolder.Text + @"\" + txtOutput.Text + ".gz" + "\"";
                         txtResult.Text += startInfo.Arguments;
-                        process.StartInfo = startInfo;
-                        process.Start();
+                        Process process = Process.Start(startInfo);
+                        // waiting till process is finished
+                        process.WaitForExit();
                     }
 
                     // deleting temp directory
@@ -192,12 +213,18 @@ namespace Concatapp
                             // the compression stream.
                             inFile.CopyTo(Compress);
 
-                            Console.WriteLine("Compressed {0} from {1} to {2} bytes.",
-                                fi.Name, fi.Length.ToString(), outFile.Length.ToString());
+                            //Console.WriteLine("Compressed {0} from {1} to {2} bytes.",
+                              //  fi.Name, fi.Length.ToString(), outFile.Length.ToString());
                         }
                     }
                 }
             }
         }
+
+        private void UpdateStatus()
+        {
+            txtResult.Text += ".";
+        }
+
     }
 }
