@@ -70,15 +70,17 @@ namespace Concatapp
                                     // waiting for finish
                                     concatthread.Join();
                                 }
-                                txtResult.Text += "The file " + file.Name + " has been processed.\r\n";
+                                txtResult.Text += "The file " + file.Name + " has been concatenated.\r\n";
                             }
                         }
                         // compressing 
+                        txtResult.Text += "Compressing\r\n";
                         Thread thread = new Thread(() => Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension)));
                         thread.Start();
                         // waiting for finish
                         thread.Join();
                         // moving compressed file to parent directory
+                        txtResult.Text += "Copying from temp directory to base directory\r\n";
                         FileInfo compressed = new FileInfo(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension + ".gz");
                         compressed.CopyTo(compressed.Directory.Parent.FullName + "\\" + compressed.Name);
                     }
@@ -108,6 +110,7 @@ namespace Concatapp
                             }
                             txtResult.Text += "Extracted: " + tempfileNames + "\r\n";
                             // concatenating
+                            txtResult.Text += "Concatenating: " + tempfileNames + "\r\n";
                             using (FileStream outputStream = File.Create(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension))
                             {
                                 foreach (FileInfo file in tempFiles)
@@ -124,11 +127,13 @@ namespace Concatapp
                             }
                             //Concat(txtResult, tempFolderPath, tempFiles, txtOutput.Text);
                             // compressing 
+                            txtResult.Text += "Compressing\r\n";
                             Thread thread = new Thread(() => Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension)));
                             thread.Start();
                             // waiting for finish
                             thread.Join();
                             // moving compressed file to parent directory
+                            txtResult.Text += "Copying from temp directory to base directory\r\n";
                             FileInfo compressed = new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension + ".gz");
                             compressed.CopyTo(compressed.Directory.Parent.FullName + @"\" + compressed.Name);
                         }
