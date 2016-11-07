@@ -36,6 +36,7 @@
             this.txtOutput = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.txtResult = new System.Windows.Forms.TextBox();
+            this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.SuspendLayout();
             // 
             // startBtn
@@ -130,6 +131,7 @@
         private System.Windows.Forms.TextBox txtOutput;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox txtResult;
+        private System.ComponentModel.BackgroundWorker backgroundWorker1;
     }
 }
 

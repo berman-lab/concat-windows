@@ -14,9 +14,6 @@ namespace Concatapp
     {
         private string[] acceptedExt = new string[4] { ".txt", ".fastq", ".zip", ".gz"};
 
-        // background worker for concatenate
-        private Thread thread;
-
         public Form1()
         {
             InitializeComponent();
@@ -66,6 +63,7 @@ namespace Concatapp
                                 using (FileStream inputStream = file.Open(FileMode.Open))
                                 {
                                     Thread concatthread = new Thread(() => inputStream.CopyTo(outputStream));
+                                    concatthread.IsBackground = true; // <-- Set your thread to background
                                     concatthread.Start();
                                     // waiting for finish
                                     concatthread.Join();
@@ -76,6 +74,7 @@ namespace Concatapp
                         // compressing 
                         txtResult.Text += "Compressing\r\n";
                         Thread thread = new Thread(() => Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension)));
+                        thread.IsBackground = true; // <-- Set your thread to background
                         thread.Start();
                         // waiting for finish
                         thread.Join();
@@ -92,6 +91,7 @@ namespace Concatapp
                         {
                             txtResult.Text += "Extracting -" + file.Name + "\r\n";
                             Thread unzipthread = new Thread(() => ZipFile.ExtractToDirectory(file.FullName, tempFolderPath));
+                            unzipthread.IsBackground = true; // <-- Set your thread to background
                             unzipthread.Start();
                             // waiting for finish
                             unzipthread.Join();
@@ -118,6 +118,7 @@ namespace Concatapp
                                     using (FileStream inputStream = file.Open(FileMode.Open))
                                     {
                                         Thread concatthread = new Thread(() => inputStream.CopyTo(outputStream));
+                                        concatthread.IsBackground = true; // <-- Set your thread to background
                                         concatthread.Start();
                                         // waiting for finish
                                         concatthread.Join();
@@ -129,6 +130,7 @@ namespace Concatapp
                             // compressing 
                             txtResult.Text += "Compressing\r\n";
                             Thread thread = new Thread(() => Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension)));
+                            thread.IsBackground = true; // <-- Set your thread to background
                             thread.Start();
                             // waiting for finish
                             thread.Join();
@@ -139,7 +141,7 @@ namespace Concatapp
                         }
                     }
                     // .gz files 
-                    if (Files[0].Extension.Equals(".gz"))
+                    else if (Files[0].Extension.Equals(".gz"))
                     {
                         string filesFullNames = "";
                         // building filenames
@@ -151,7 +153,7 @@ namespace Concatapp
                                 filesFullNames = filesFullNames + "\"" +  file.FullName + "\"" + " ";
                         }
                         // concatenating
-                        txtResult.Text += "Concatenating\r\n";
+                        txtResult.Text += "Concatenating...(might take a few minutes)\r\n";
                         ProcessStartInfo startInfo = new ProcessStartInfo();
                         startInfo.WindowStyle = ProcessWindowStyle.Hidden;
                         startInfo.FileName = "cmd.exe";
@@ -203,11 +205,8 @@ namespace Concatapp
             // Get the stream of the source file.
             using (FileStream inFile = fi.OpenRead())
             {
-                // Prevent compressing hidden and 
-                // already compressed files.
-                if ((File.GetAttributes(fi.FullName)
-                    & FileAttributes.Hidden)
-                    != FileAttributes.Hidden & fi.Extension != ".gz")
+                // Prevent compressing hidden and already compressed files.
+                if ((File.GetAttributes(fi.FullName) & FileAttributes.Hidden) != FileAttributes.Hidden & fi.Extension != ".gz")
                 {
                     // Create the compressed file.
                     using (FileStream outFile = File.Create(fi.FullName + ".gz"))
@@ -217,9 +216,6 @@ namespace Concatapp
                             // Copy the source file into 
                             // the compression stream.
                             inFile.CopyTo(Compress);
-
-                            //Console.WriteLine("Compressed {0} from {1} to {2} bytes.",
-                              //  fi.Name, fi.Length.ToString(), outFile.Length.ToString());
                         }
                     }
                 }
@@ -231,5 +227,9 @@ namespace Concatapp
             txtResult.Text += ".";
         }
 
+        private void abortBtn_Click(object sender, EventArgs e)
+        {
+            Environment.Exit(Environment.ExitCode);
+        }
     }
 }
