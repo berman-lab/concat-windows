@@ -27,8 +27,9 @@ namespace Concatapp
             }
         }
 
-        private void startBtn_Click(object sender, EventArgs e)
+        private async void startBtn_Click(object sender, EventArgs e)
         {
+            startBtn.Enabled = false;
             // clearing output text box
             txtResult.Text = "";
             // checking if arguments exist
@@ -55,6 +56,8 @@ namespace Concatapp
                     // .txt and .fastq 
                     if (Files[0].Extension.Equals(".txt") || Files[0].Extension.Equals(".fastq"))
                     {
+                        abortBtn.Enabled = true;
+                        abortBtn.Visible = true;
                         // concatenating
                         using (FileStream outputStream = File.Create(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension))
                         {
@@ -62,22 +65,14 @@ namespace Concatapp
                             {
                                 using (FileStream inputStream = file.Open(FileMode.Open))
                                 {
-                                    Thread concatthread = new Thread(() => inputStream.CopyTo(outputStream));
-                                    concatthread.IsBackground = true; // <-- Set your thread to background
-                                    concatthread.Start();
-                                    // waiting for finish
-                                    concatthread.Join();
+                                    await inputStream.CopyToAsync(outputStream);
                                 }
                                 txtResult.Text += "The file " + file.Name + " has been concatenated.\r\n";
                             }
                         }
                         // compressing 
                         txtResult.Text += "Compressing\r\n";
-                        Thread thread = new Thread(() => Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension)));
-                        thread.IsBackground = true; // <-- Set your thread to background
-                        thread.Start();
-                        // waiting for finish
-                        thread.Join();
+                        Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension));
                         // moving compressed file to parent directory
                         txtResult.Text += "Copying from temp directory to base directory\r\n";
                         FileInfo compressed = new FileInfo(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension + ".gz");
@@ -96,6 +91,8 @@ namespace Concatapp
                             // waiting for finish
                             unzipthread.Join();
                         }
+                        abortBtn.Enabled = true;
+                        abortBtn.Visible = true;
                         // getting temp directory file info
                         DirectoryInfo tempD = new DirectoryInfo(tempFolderPath);
                         FileInfo[] tempFiles = tempD.GetFiles();
@@ -111,17 +108,13 @@ namespace Concatapp
                             txtResult.Text += "Extracted: " + tempfileNames + "\r\n";
                             // concatenating
                             txtResult.Text += "Concatenating: " + tempfileNames + "\r\n";
-                            using (FileStream outputStream = File.Create(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension))
+                             using (FileStream outputStream = File.Create(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension))
                             {
                                 foreach (FileInfo file in tempFiles)
                                 {
                                     using (FileStream inputStream = file.Open(FileMode.Open))
                                     {
-                                        Thread concatthread = new Thread(() => inputStream.CopyTo(outputStream));
-                                        concatthread.IsBackground = true; // <-- Set your thread to background
-                                        concatthread.Start();
-                                        // waiting for finish
-                                        concatthread.Join();
+                                        await inputStream.CopyToAsync(outputStream);
                                     }
                                     txtResult.Text += "The file " + file.Name + " has been processed.\r\n";
                                 }
@@ -129,11 +122,7 @@ namespace Concatapp
                             //Concat(txtResult, tempFolderPath, tempFiles, txtOutput.Text);
                             // compressing 
                             txtResult.Text += "Compressing\r\n";
-                            Thread thread = new Thread(() => Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension)));
-                            thread.IsBackground = true; // <-- Set your thread to background
-                            thread.Start();
-                            // waiting for finish
-                            thread.Join();
+                            Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension));
                             // moving compressed file to parent directory
                             txtResult.Text += "Copying from temp directory to base directory\r\n";
                             FileInfo compressed = new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension + ".gz");
@@ -170,6 +159,7 @@ namespace Concatapp
                     txtResult.Text += "\r\n-------finished-------\r\n";
                 }
             }
+            startBtn.Enabled = true;
         }
 
         // used to validate the input
@@ -200,7 +190,7 @@ namespace Concatapp
         }
 
         // compressing file to .gz
-        public static void Compress(FileInfo fi)
+        public static async void Compress(FileInfo fi)
         {
             // Get the stream of the source file.
             using (FileStream inFile = fi.OpenRead())
@@ -215,7 +205,7 @@ namespace Concatapp
                         {
                             // Copy the source file into 
                             // the compression stream.
-                            inFile.CopyTo(Compress);
+                            await inFile.CopyToAsync(Compress);
                         }
                     }
                 }
@@ -227,7 +217,7 @@ namespace Concatapp
             txtResult.Text += ".";
         }
 
-        private void abortBtn_Click(object sender, EventArgs e)
+        private void abortBtn_Click_1(object sender, EventArgs e)
         {
             Environment.Exit(Environment.ExitCode);
         }

@@ -37,6 +37,7 @@
             this.label1 = new System.Windows.Forms.Label();
             this.txtResult = new System.Windows.Forms.TextBox();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
+            this.abortBtn = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // startBtn
@@ -103,10 +104,23 @@
             this.txtResult.Size = new System.Drawing.Size(574, 151);
             this.txtResult.TabIndex = 6;
             // 
+            // abortBtn
+            // 
+            this.abortBtn.Enabled = false;
+            this.abortBtn.Location = new System.Drawing.Point(430, 163);
+            this.abortBtn.Name = "abortBtn";
+            this.abortBtn.Size = new System.Drawing.Size(75, 23);
+            this.abortBtn.TabIndex = 7;
+            this.abortBtn.Text = "Abort";
+            this.abortBtn.UseVisualStyleBackColor = true;
+            this.abortBtn.Visible = false;
+            this.abortBtn.Click += new System.EventHandler(this.abortBtn_Click_1);
+            // 
             // Form1
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.ClientSize = new System.Drawing.Size(598, 355);
+            this.Controls.Add(this.abortBtn);
             this.Controls.Add(this.txtResult);
             this.Controls.Add(this.txtOutput);
             this.Controls.Add(this.label1);
@@ -132,6 +146,7 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox txtResult;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
+        private System.Windows.Forms.Button abortBtn;
     }
 }
 
