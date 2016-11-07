@@ -72,11 +72,11 @@ namespace Concatapp
                         }
                         // compressing 
                         txtResult.Text += "Compressing\r\n";
-                        Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension));
+                        await Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension));
                         // moving compressed file to parent directory
                         txtResult.Text += "Copying from temp directory to base directory\r\n";
                         FileInfo compressed = new FileInfo(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension + ".gz");
-                        compressed.CopyTo(compressed.Directory.Parent.FullName + "\\" + compressed.Name);
+                        compressed.MoveTo(compressed.Directory.Parent.FullName + "\\" + compressed.Name);
                     }
                     // .zip files
                     else if (Files[0].Extension.Equals(".zip"))
@@ -102,7 +102,7 @@ namespace Concatapp
                             txtResult.Text += "Extracted: " + tempfileNames + "\r\n";
                             // concatenating
                             txtResult.Text += "Concatenating: " + tempfileNames + "\r\n";
-                             using (FileStream outputStream = File.Create(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension))
+                            using (FileStream outputStream = File.Create(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension))
                             {
                                 foreach (FileInfo file in tempFiles)
                                 {
@@ -116,11 +116,11 @@ namespace Concatapp
                             //Concat(txtResult, tempFolderPath, tempFiles, txtOutput.Text);
                             // compressing 
                             txtResult.Text += "Compressing\r\n";
-                            Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension));
+                            await Compress(new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension));
                             // moving compressed file to parent directory
                             txtResult.Text += "Copying from temp directory to base directory\r\n";
                             FileInfo compressed = new FileInfo(tempFolderPath + @"\" + txtOutput.Text + tempFiles[0].Extension + ".gz");
-                            compressed.CopyTo(compressed.Directory.Parent.FullName + @"\" + compressed.Name);
+                            compressed.MoveTo(compressed.Directory.Parent.FullName + @"\" + compressed.Name);
                         }
                     }
                     // .gz files 
@@ -186,7 +186,7 @@ namespace Concatapp
         }
 
         // compressing file to .gz
-        public static async void Compress(FileInfo fi)
+        public static async Task<int> Compress(FileInfo fi)
         {
             // Get the stream of the source file.
             using (FileStream inFile = fi.OpenRead())
@@ -206,6 +206,7 @@ namespace Concatapp
                     }
                 }
             }
+            return 0;
         }
 
         private void UpdateStatus()
