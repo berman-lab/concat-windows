@@ -5,7 +5,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Threading;
-using System.ComponentModel;
+using System.Threading.Tasks;
 
 
 namespace Concatapp
@@ -30,6 +30,8 @@ namespace Concatapp
         private async void startBtn_Click(object sender, EventArgs e)
         {
             startBtn.Enabled = false;
+            abortBtn.Enabled = true;
+            abortBtn.Visible = true;
             // clearing output text box
             txtResult.Text = "";
             // checking if arguments exist
@@ -56,8 +58,6 @@ namespace Concatapp
                     // .txt and .fastq 
                     if (Files[0].Extension.Equals(".txt") || Files[0].Extension.Equals(".fastq"))
                     {
-                        abortBtn.Enabled = true;
-                        abortBtn.Visible = true;
                         // concatenating
                         using (FileStream outputStream = File.Create(tempFolderPath + @"\" + txtOutput.Text + Files[0].Extension))
                         {
@@ -85,14 +85,8 @@ namespace Concatapp
                         foreach (FileInfo file in Files)
                         {
                             txtResult.Text += "Extracting -" + file.Name + "\r\n";
-                            Thread unzipthread = new Thread(() => ZipFile.ExtractToDirectory(file.FullName, tempFolderPath));
-                            unzipthread.IsBackground = true; // <-- Set your thread to background
-                            unzipthread.Start();
-                            // waiting for finish
-                            unzipthread.Join();
+                            await Task.Run(() => ZipFile.ExtractToDirectory(file.FullName, tempFolderPath));
                         }
-                        abortBtn.Enabled = true;
-                        abortBtn.Visible = true;
                         // getting temp directory file info
                         DirectoryInfo tempD = new DirectoryInfo(tempFolderPath);
                         FileInfo[] tempFiles = tempD.GetFiles();
@@ -160,6 +154,8 @@ namespace Concatapp
                 }
             }
             startBtn.Enabled = true;
+            abortBtn.Enabled = false;
+            abortBtn.Visible = false;
         }
 
         // used to validate the input
@@ -220,6 +216,17 @@ namespace Concatapp
         private void abortBtn_Click_1(object sender, EventArgs e)
         {
             Environment.Exit(Environment.ExitCode);
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            txtResult.Text += "\r\n-----App still working-----\r\n";
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            string message = " ----- Welcome to concat app -----\r\nThis app can concatenate .fastq,.txt,.zip,.txt files.\r\nPlease select the folder that contains the files you would like to concat and the output name and press start\r\nNote: The folder should contain only the files to concatenate and all files must have the same extension";
+            MessageBox.Show(message);
         }
     }
 }

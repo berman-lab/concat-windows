@@ -38,6 +38,8 @@
             this.txtResult = new System.Windows.Forms.TextBox();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.abortBtn = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // startBtn
@@ -107,19 +109,41 @@
             // abortBtn
             // 
             this.abortBtn.Enabled = false;
-            this.abortBtn.Location = new System.Drawing.Point(430, 163);
+            this.abortBtn.Location = new System.Drawing.Point(399, 163);
             this.abortBtn.Name = "abortBtn";
-            this.abortBtn.Size = new System.Drawing.Size(75, 23);
+            this.abortBtn.Size = new System.Drawing.Size(106, 23);
             this.abortBtn.TabIndex = 7;
-            this.abortBtn.Text = "Abort";
+            this.abortBtn.Text = "Abort and Exit";
             this.abortBtn.UseVisualStyleBackColor = true;
             this.abortBtn.Visible = false;
             this.abortBtn.Click += new System.EventHandler(this.abortBtn_Click_1);
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(15, 163);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(116, 23);
+            this.button1.TabIndex = 8;
+            this.button1.Text = "Still working?";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(483, 86);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(95, 23);
+            this.button2.TabIndex = 9;
+            this.button2.Text = "help";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
             // 
             // Form1
             // 
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Inherit;
             this.ClientSize = new System.Drawing.Size(598, 355);
+            this.Controls.Add(this.button2);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.abortBtn);
             this.Controls.Add(this.txtResult);
             this.Controls.Add(this.txtOutput);
@@ -128,6 +152,8 @@
             this.Controls.Add(this.txtFolder);
             this.Controls.Add(this.lbl_input);
             this.Controls.Add(this.startBtn);
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
             this.Name = "Form1";
             this.Text = "Concat app";
             this.ResumeLayout(false);
@@ -147,6 +173,8 @@
         private System.Windows.Forms.TextBox txtResult;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private System.Windows.Forms.Button abortBtn;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button button2;
     }
 }
 
